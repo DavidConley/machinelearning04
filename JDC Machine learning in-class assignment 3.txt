@@ -1,0 +1,108 @@
+#John David Conley
+#Machine Learning
+#Assignment 4
+#11-1-2022
+#https://github.com/DavidConley/machinelearning04
+
+#Programming elements:
+#Linear Regression, K-Means Clustering and Data Analysis
+#In class programming:
+#1. Apply Linear Regression to the provided dataset using underlying steps.
+##a. Import the given “Salary_Data.csv”
+##b. Split the data in train_test partitions, such that 1/3 of the data is reserved as test subset.
+##c. Train and predict the model.
+##d. Calculate the mean_squared error
+##e. Visualize both train and test data using scatter plot.
+#2. Apply K means clustering in the dataset provided:
+##• Remove any null values by the mean.
+##• Use the elbow method to find a good number of clusters with the K-Means algorithm
+##• Calculate the silhouette score for the above clustering
+#3. Try feature scaling and then apply K-Means on the scaled features. Did that improve the Silhouette score? If
+#   Yes, can you justify why
+import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.metrics import confusion_matrix, classification_report, mean_squared_error
+from sklearn.cluster import KMeans
+from sklearn import metrics, preprocessing
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+sns.set(style="white", color_codes=True)
+import warnings
+warnings.filterwarnings("ignore")
+
+#1
+##a
+dataset = pd.read_csv('Salary_Data.csv')
+dataset
+
+##b
+x = dataset.iloc[:, :-1].values
+y = dataset.iloc[:, 1].values
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size = 0.33,random_state = 0)
+x_test
+
+##c
+regressor = LinearRegression()
+regressor.fit(x_train, y_train)
+y_pred = regressor.predict(x_test)
+y_pred
+
+##d
+mean_squared_error(y_test,y_pred)
+
+##e
+plt.plot(x_train, y_train, 'o', color='black')
+
+plt.plot(x_test, y_test, 'o', color='black')
+
+#2
+dataset2 = pd.read_csv('K-Mean_Dataset.csv')
+dataset2
+
+print(dataset2.isnull().sum())
+
+#2-1
+dataset2A = dataset2.fillna(dataset2.mean())
+dataset2A
+
+#2-2
+dataset2B = dataset2A.drop(['CUST_ID'], axis=1)
+wcss = []
+for i in range(1,11):
+    kmeans = KMeans(n_clusters=i,init='k-means++',max_iter=300,n_init=10,random_state=0)
+    kmeans.fit(dataset2B)
+    wcss.append(kmeans.inertia_)
+
+plt.plot(range(1,11),wcss, 'bx-')
+plt.title('the elbow method')
+plt.xlabel('Number of Clusters')
+plt.ylabel('Wcss')
+plt.show()
+
+for key, val in dataset2B.items():
+    print(f'{key} : {val}')
+
+#2-3
+kmeans2 = KMeans(n_clusters=3)
+kmeans2.fit(dataset2B)
+y_cluster_kmeans = kmeans2.predict(dataset2B)
+score = metrics.silhouette_score(dataset2B, y_cluster_kmeans)
+print(score)
+
+#3
+scaler = preprocessing.StandardScaler()
+scaler.fit(dataset2B)
+d2B_scaled_array = scaler.transform(dataset2B)
+d2B_scaled = pd.DataFrame(d2B_scaled_array, columns = dataset2B.columns)
+
+kmeans2 = KMeans(n_clusters=3)
+kmeans2.fit(d2B_scaled)
+y_cluster_kmeans = kmeans2.predict(d2B_scaled)
+score2 = metrics.silhouette_score(d2B_scaled, y_cluster_kmeans)
+print(score2)
+
+print("Depends on what one considers improved. I personally would say no, because closer to 1 means the clusters are better separated.")
